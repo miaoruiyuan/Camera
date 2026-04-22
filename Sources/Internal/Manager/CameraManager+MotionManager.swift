@@ -86,23 +86,23 @@ private extension CameraManagerMotionManager {
     func getNewFrameOrientationForBackCamera(_ orientation: UIDeviceOrientation) -> CGImagePropertyOrientation {
         guard let parent else { return .right }
         switch orientation {
-        case .portrait: parent.attributes.mirrorOutput ? .leftMirrored : .right
-        case .landscapeLeft: parent.attributes.mirrorOutput ? .upMirrored : .up
-        case .landscapeRight: parent.attributes.mirrorOutput ? .downMirrored : .down
-        default: parent.attributes.mirrorOutput ? .leftMirrored : .right
+        case .portrait: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.leftMirrored : .right
+        case .landscapeLeft: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.upMirrored : .up
+        case .landscapeRight: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.downMirrored : .down
+        default: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.leftMirrored : .right
     }}
     func getNewFrameOrientationForFrontCamera(_ orientation: UIDeviceOrientation) -> CGImagePropertyOrientation {
-        guard let parent else { return .leftMirrored }
+        guard let parent else { return CGImagePropertyOrientation.leftMirrored }
         switch orientation {
-        case .portrait: parent.attributes.mirrorOutput ? .right : .leftMirrored
-        case .landscapeLeft: parent.attributes.mirrorOutput ? .down : .downMirrored
-        case .landscapeRight: parent.attributes.mirrorOutput ? .up : .upMirrored
-        default: parent.attributes.mirrorOutput ? .right : .leftMirrored
+        case .portrait: parent.attributes.mirrorOutput ? .right : CGImagePropertyOrientation.leftMirrored
+        case .landscapeLeft: parent.attributes.mirrorOutput ? .down : CGImagePropertyOrientation.downMirrored
+        case .landscapeRight: parent.attributes.mirrorOutput ? .up : CGImagePropertyOrientation.upMirrored
+        default: parent.attributes.mirrorOutput ? .right : CGImagePropertyOrientation.leftMirrored
     }}
     func shouldAnimateFrameOrientationChange(_ newFrameOrientation: CGImagePropertyOrientation) -> Bool {
         guard let parent else { return false }
         let backCameraOrientations: [CGImagePropertyOrientation] = [.left, .right, .up, .down],
-            frontCameraOrientations: [CGImagePropertyOrientation] = [.leftMirrored, .rightMirrored, .upMirrored, .downMirrored]
+            frontCameraOrientations: [CGImagePropertyOrientation] = [CGImagePropertyOrientation.leftMirrored, CGImagePropertyOrientation.rightMirrored, CGImagePropertyOrientation.upMirrored, CGImagePropertyOrientation.downMirrored]
 
         return (backCameraOrientations.contains(newFrameOrientation) && backCameraOrientations.contains(parent.attributes.frameOrientation)) ||
         (frontCameraOrientations.contains(parent.attributes.frameOrientation) && frontCameraOrientations.contains(newFrameOrientation))
