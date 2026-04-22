@@ -12,6 +12,10 @@
 import SwiftUI
 
 extension MCamera { @MainActor class Config {
+    // MARK: Initial Values
+    var initialAttributes: CameraManagerAttributes = .init()
+    var focusIndicator: CameraFocusIndicatorView = .init()
+
     // MARK: Screens
     var cameraScreen: CameraScreenBuilder = DefaultCameraScreen.init
     var capturedMediaScreen: CapturedMediaScreenBuilder? = DefaultCapturedMediaScreen.init
@@ -25,4 +29,5 @@ extension MCamera { @MainActor class Config {
     // MARK: Others
     var appDelegate: MApplicationDelegate.Type? = nil
     var isCameraConfigured: Bool = false
+    var didApplyInitialConfiguration: Bool = false
 }}

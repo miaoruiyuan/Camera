@@ -14,7 +14,11 @@ import MetalKit
 import AVKit
 
 @MainActor class CameraMetalView: MTKView {
-    private(set) var parent: CameraManager!
+    private weak var _parent: CameraManager?
+    private var parent: CameraManager {
+        guard let _parent else { preconditionFailure("CameraManager released before CameraMetalView finished its lifecycle.") }
+        return _parent
+    }
     private(set) var ciContext: CIContext!
     private(set) var commandQueue: MTLCommandQueue!
     private(set) var currentFrame: CIImage?
@@ -34,7 +38,7 @@ extension CameraMetalView {
 }
 private extension CameraMetalView {
     func assignInitialValues(parent: CameraManager, metalDevice: MTLDevice) {
-        self.parent = parent
+        self._parent = parent
         self.ciContext = CIContext(mtlDevice: metalDevice)
         self.commandQueue = metalDevice.makeCommandQueue()
     }

@@ -157,12 +157,22 @@ private extension MCamera {
 private extension MCamera {
     func onCameraAppear() { Task {
         do {
+            applyInitialConfigurationIfNeeded()
             try await manager.setup()
             lockScreenOrientation(.portrait)
         } catch { print("(MijickCamera) ERROR DURING SETUP: \(error)") }
     }}
     func onCameraDisappear() {
         manager.cancel()
+    }
+}
+private extension MCamera {
+    func applyInitialConfigurationIfNeeded() {
+        guard !config.didApplyInitialConfiguration else { return }
+
+        manager.attributes = config.initialAttributes
+        manager.cameraMetalView.focusIndicator = config.focusIndicator
+        config.didApplyInitialConfiguration = true
     }
 }
 
