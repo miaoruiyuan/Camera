@@ -73,6 +73,9 @@ private extension CameraManagerVideoOutput {
         guard let parent else { return }
         guard let connection = output.connection(with: .video), connection.isVideoMirroringSupported else { return }
 
+        if output.availableVideoCodecTypes.contains(.h264) {
+            output.setOutputSettings([AVVideoCodecKey: AVVideoCodecType.h264], for: connection)
+        }
         connection.isVideoMirrored = parent.attributes.mirrorOutput ? parent.attributes.cameraPosition != .front : parent.attributes.cameraPosition == .front
         connection.videoOrientation = parent.attributes.deviceOrientation
     }
