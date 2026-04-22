@@ -67,16 +67,20 @@ private extension CameraManagerMotionManager {
 private extension CameraManagerMotionManager {
     func getNewUserBlockedScreenRotation() -> Bool {
         guard let parent else { return false }
-        switch parent.attributes.deviceOrientation.rawValue == UIDevice.current.orientation.rawValue {
-        case true: false
-        case false: !parent.attributes.orientationLocked
-    }}
+        if parent.attributes.deviceOrientation.rawValue == UIDevice.current.orientation.rawValue {
+            return false
+        }
+        return !parent.attributes.orientationLocked
+    }
     func getNewFrameOrientation(_ orientation: UIDeviceOrientation) -> CGImagePropertyOrientation {
         guard let parent else { return .right }
         switch parent.attributes.cameraPosition {
-        case .back: getNewFrameOrientationForBackCamera(orientation)
-        case .front: getNewFrameOrientationForFrontCamera(orientation)
-    }}
+        case .back:
+            return getNewFrameOrientationForBackCamera(orientation)
+        case .front:
+            return getNewFrameOrientationForFrontCamera(orientation)
+        }
+    }
     func updateFrameOrientation(_ newFrameOrientation: CGImagePropertyOrientation) { if let parent, newFrameOrientation != parent.attributes.frameOrientation {
         let shouldAnimate = shouldAnimateFrameOrientationChange(newFrameOrientation)
         updateFrameOrientation(withAnimation: shouldAnimate, newFrameOrientation: newFrameOrientation)
@@ -86,19 +90,29 @@ private extension CameraManagerMotionManager {
     func getNewFrameOrientationForBackCamera(_ orientation: UIDeviceOrientation) -> CGImagePropertyOrientation {
         guard let parent else { return .right }
         switch orientation {
-        case .portrait: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.leftMirrored : .right
-        case .landscapeLeft: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.upMirrored : .up
-        case .landscapeRight: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.downMirrored : .down
-        default: parent.attributes.mirrorOutput ? CGImagePropertyOrientation.leftMirrored : .right
-    }}
+        case .portrait:
+            return parent.attributes.mirrorOutput ? CGImagePropertyOrientation.leftMirrored : .right
+        case .landscapeLeft:
+            return parent.attributes.mirrorOutput ? CGImagePropertyOrientation.upMirrored : .up
+        case .landscapeRight:
+            return parent.attributes.mirrorOutput ? CGImagePropertyOrientation.downMirrored : .down
+        default:
+            return parent.attributes.mirrorOutput ? CGImagePropertyOrientation.leftMirrored : .right
+        }
+    }
     func getNewFrameOrientationForFrontCamera(_ orientation: UIDeviceOrientation) -> CGImagePropertyOrientation {
         guard let parent else { return CGImagePropertyOrientation.leftMirrored }
         switch orientation {
-        case .portrait: parent.attributes.mirrorOutput ? .right : CGImagePropertyOrientation.leftMirrored
-        case .landscapeLeft: parent.attributes.mirrorOutput ? .down : CGImagePropertyOrientation.downMirrored
-        case .landscapeRight: parent.attributes.mirrorOutput ? .up : CGImagePropertyOrientation.upMirrored
-        default: parent.attributes.mirrorOutput ? .right : CGImagePropertyOrientation.leftMirrored
-    }}
+        case .portrait:
+            return parent.attributes.mirrorOutput ? .right : CGImagePropertyOrientation.leftMirrored
+        case .landscapeLeft:
+            return parent.attributes.mirrorOutput ? .down : CGImagePropertyOrientation.downMirrored
+        case .landscapeRight:
+            return parent.attributes.mirrorOutput ? .up : CGImagePropertyOrientation.upMirrored
+        default:
+            return parent.attributes.mirrorOutput ? .right : CGImagePropertyOrientation.leftMirrored
+        }
+    }
     func shouldAnimateFrameOrientationChange(_ newFrameOrientation: CGImagePropertyOrientation) -> Bool {
         guard let parent else { return false }
         let backCameraOrientations: [CGImagePropertyOrientation] = [.left, .right, .up, .down],
