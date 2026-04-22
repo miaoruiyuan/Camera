@@ -12,15 +12,20 @@
 import AVKit
 
 @MainActor class CameraManagerPhotoOutput: NSObject {
-    private(set) var parent: CameraManager!
+    private weak var _parent: CameraManager?
+    private var parent: CameraManager? { _parent }
     private(set) var output: AVCapturePhotoOutput = .init()
 }
 
 // MARK: Setup
 extension CameraManagerPhotoOutput {
     func setup(parent: CameraManager) throws(MCameraError) {
-        self.parent = parent
-        try self.parent.captureSession.add(output: output)
+        self._parent = parent
+        try parent.captureSession.add(output: output)
+    }
+
+    func reset() {
+        _parent = nil
     }
 }
 
@@ -32,6 +37,7 @@ extension CameraManagerPhotoOutput {
 // MARK: Capture
 extension CameraManagerPhotoOutput {
     func capture() {
+        guard let parent else { return }
         let settings = getPhotoOutputSettings()
 
         configureOutput()
@@ -41,11 +47,13 @@ extension CameraManagerPhotoOutput {
 }
 private extension CameraManagerPhotoOutput {
     func getPhotoOutputSettings() -> AVCapturePhotoSettings {
+        guard let parent else { return AVCapturePhotoSettings() }
         let settings = AVCapturePhotoSettings()
         settings.flashMode = parent.attributes.flashMode.toDeviceFlashMode()
         return settings
     }
     func configureOutput() {
+        guard let parent else { return }
         guard let connection = output.connection(with: .video), connection.isVideoMirroringSupported else { return }
 
         connection.isVideoMirrored = parent.attributes.mirrorOutput ? parent.attributes.cameraPosition != .front : parent.attributes.cameraPosition == .front
@@ -56,6 +64,7 @@ private extension CameraManagerPhotoOutput {
 // MARK: Receive Data
 extension CameraManagerPhotoOutput: @preconcurrency AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: (any Error)?) {
+        guard let parent else { return }
         guard let imageData = photo.fileDataRepresentation(),
               let ciImage = CIImage(data: imageData)
         else { return }
@@ -86,6 +95,7 @@ private extension CameraManagerPhotoOutput {
 }
 private extension CameraManagerPhotoOutput {
     func getFixedFrameOrientation() -> CGImagePropertyOrientation {
+        guard let parent else { return .right }
         guard UIDevice.current.orientation != parent.attributes.deviceOrientation.toDeviceOrientation() else { return parent.attributes.frameOrientation }
 
         return switch (parent.attributes.deviceOrientation, parent.attributes.cameraPosition) {

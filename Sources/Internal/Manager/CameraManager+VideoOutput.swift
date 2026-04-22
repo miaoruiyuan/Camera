@@ -14,7 +14,8 @@ import SwiftUI
 import MijickTimer
 
 @MainActor class CameraManagerVideoOutput: NSObject {
-    private(set) var parent: CameraManager!
+    private weak var _parent: CameraManager?
+    private var parent: CameraManager? { _parent }
     private(set) var output: AVCaptureMovieFileOutput = .init()
     private(set) var timer: MTimer = .init(.camera)
     private(set) var recordingTime: MTime = .zero
@@ -24,7 +25,7 @@ import MijickTimer
 // MARK: Setup
 extension CameraManagerVideoOutput {
     func setup(parent: CameraManager) throws(MCameraError) {
-        self.parent = parent
+        self._parent = parent
         try parent.captureSession.add(output: output)
     }
 }
@@ -33,6 +34,8 @@ extension CameraManagerVideoOutput {
 extension CameraManagerVideoOutput {
     func reset() {
         timer.reset()
+        firstRecordedFrame = nil
+        _parent = nil
     }
 }
 
@@ -52,6 +55,7 @@ extension CameraManagerVideoOutput {
 // MARK: Start Recording
 private extension CameraManagerVideoOutput {
     func startRecording() {
+        guard let parent else { return }
         guard let url = prepareUrlForVideoRecording() else { return }
 
         configureOutput()
@@ -66,12 +70,14 @@ private extension CameraManagerVideoOutput {
         FileManager.prepareURLForVideoOutput()
     }
     func configureOutput() {
+        guard let parent else { return }
         guard let connection = output.connection(with: .video), connection.isVideoMirroringSupported else { return }
 
         connection.isVideoMirrored = parent.attributes.mirrorOutput ? parent.attributes.cameraPosition != .front : parent.attributes.cameraPosition == .front
         connection.videoOrientation = parent.attributes.deviceOrientation
     }
     func storeLastFrame() {
+        guard let parent else { return }
         guard let texture = parent.cameraMetalView.currentDrawable?.texture,
               let ciImage = CIImage(mtlTexture: texture, options: nil),
               let cgImage = parent.cameraMetalView.ciContext.createCGImage(ciImage, from: ciImage.extent)
@@ -80,7 +86,8 @@ private extension CameraManagerVideoOutput {
         firstRecordedFrame = UIImage(cgImage: cgImage, scale: 1.0, orientation: parent.attributes.deviceOrientation.toImageOrientation())
     }
     func startRecordingTimer() { try? timer
-        .publish(every: 1) { [self] in
+        .publish(every: 1) { [weak self] in
+            guard let self, let parent = self.parent else { return }
             recordingTime = $0
             parent.objectWillChange.send()
         }
@@ -91,6 +98,7 @@ private extension CameraManagerVideoOutput {
 // MARK: Stop Recording
 private extension CameraManagerVideoOutput {
     func stopRecording() {
+        guard parent != nil else { return }
         presentLastFrame()
         output.stopRecording()
         timer.reset()
@@ -98,6 +106,7 @@ private extension CameraManagerVideoOutput {
 }
 private extension CameraManagerVideoOutput {
     func presentLastFrame() {
+        guard let parent else { return }
         let firstRecordedFrame = MCameraMedia(data: firstRecordedFrame)
         parent.setCapturedMedia(firstRecordedFrame)
     }
@@ -105,7 +114,8 @@ private extension CameraManagerVideoOutput {
 
 // MARK: Receive Data
 extension CameraManagerVideoOutput: @preconcurrency AVCaptureFileOutputRecordingDelegate {
-    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: (any Error)?) { Task {
+    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: (any Error)?) { Task { [weak self] in
+        guard let self, let parent = self.parent else { return }
         let videoURL = try await prepareVideo(outputFileURL: outputFileURL, cameraFilters: parent.attributes.cameraFilters)
         let capturedVideo = MCameraMedia(data: videoURL)
 

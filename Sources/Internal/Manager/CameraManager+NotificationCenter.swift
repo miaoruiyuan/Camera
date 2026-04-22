@@ -12,18 +12,20 @@
 import Foundation
 
 @MainActor class CameraManagerNotificationCenter {
-    private(set) var parent: CameraManager!
+    private weak var _parent: CameraManager?
+    private var parent: CameraManager? { _parent }
 }
 
 // MARK: Setup
 extension CameraManagerNotificationCenter {
     func setup(parent: CameraManager) {
-        self.parent = parent
+        self._parent = parent
         NotificationCenter.default.addObserver(self, selector: #selector(handleSessionWasInterrupted), name: .AVCaptureSessionWasInterrupted, object: parent.captureSession)
     }
 }
 private extension CameraManagerNotificationCenter {
     @objc func handleSessionWasInterrupted() {
+        guard let parent else { return }
         parent.attributes.lightMode = .off
         parent.videoOutput.reset()
     }
@@ -33,5 +35,6 @@ private extension CameraManagerNotificationCenter {
 extension CameraManagerNotificationCenter {
     func reset() {
         NotificationCenter.default.removeObserver(self, name: .AVCaptureSessionWasInterrupted, object: parent?.captureSession)
+        _parent = nil
     }
 }
