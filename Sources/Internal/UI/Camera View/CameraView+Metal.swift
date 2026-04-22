@@ -22,7 +22,7 @@ import AVKit
     private(set) var ciContext: CIContext!
     private(set) var commandQueue: MTLCommandQueue!
     private(set) var currentFrame: CIImage?
-    private(set) var focusIndicator: CameraFocusIndicatorView = .init()
+    var focusIndicator: CameraFocusIndicatorView = .init()
     private(set) var isAnimating: Bool = false
 }
 
